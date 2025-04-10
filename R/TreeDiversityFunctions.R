@@ -3,20 +3,14 @@
 ## Functions specifically written to map diversity in Amazonia
 ## (c) Hans ter Steege, Naturalis Biodiversity Center, Leiden, The Netherlands
 
-
-
 ## Libraries and sources
 library(quantreg)
-library(raster)
+library(terra)#raster)
 library(rgdal)
 library(vegan)
 library(ape)
 
-
-
-
-
-##################### make map based on loess stratified by by forest #####################
+##################### make map based on loess stratified by forest #####################
 
 make.trait.map = function(w.data = NULL, o = NULL, outlier.rem = F,
                           degree = 2, surface = "direct", loess.se = F,

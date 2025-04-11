@@ -12,8 +12,7 @@ library(terra)
 library(sf)
 library(gridExtra)
 
-
-## load & prepare data
+## load raw data
 plots_all <- tibble(read.csv("data/plots.csv", sep = "\t"))
 trees_all <- tibble(read.csv("data/trees.csv", sep = "\t"))
 
@@ -28,23 +27,19 @@ plots_all <- plots_all %>%
   filter(plot_label != "SPO") %>% 
   filter(plot_label != "PSE5B-10B")
 
-## remove trees without species id & trees < dbh 10cm
-trees_all <- trees_all %>%
-  filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
-  filter(species != "")
-
-## REMOVE PLOTS WITH AREA < 0.2 !!!!!!
+## remove plots under 0.2 ha
 small_plots <- plots_all$plot_label[which(plots_all$area < 0.2)]
 
 trees_all <- trees_all %>% 
   filter(!(plot_label %in% small_plots))
 
 plots_all <- plots_all %>% 
-      filter(!(plot_label %in% small_plots))
+  filter(!(plot_label %in% small_plots))
 
-## tibbles to keep/save
-trees <- trees_all[,c(1:2,17,23,27)]
-plots <- plots_all[,c(1,4:5,10:11,17:18,21:22)]
+## remove trees without species id & trees < dbh 10cm
+trees_all <- trees_all %>%
+  filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
+  filter(species != "")
 
 ## community dataframe
 community1 <- tibble(plot = trees$plot_label, species = trees$species)
@@ -65,45 +60,31 @@ for (i in 1:length(plot_vect)){
 }
 community_round[is.na(community_round)] <- 0
 
-# calcul Reineke index
+## Reineke index computation
+trees <- trees_all[,c(1:2,17,23,27)]
+reineke_index_vect <- as.numeric()
+for (i in 1:length(plot_vect)){
+  area <- plots[plots$plot_label == plot_vect[i],]$area
+  temp <- trees %>%
+    filter(plot_label == plot_vect[i]) %>%
+    filter(!(is.na(dbh1)&is.na(dbh2)))
+ 
+  ## when no dbh1 replace by dbh2
+  temp$dbh1[which(is.na(temp$dbh1))] <- temp$dbh2[which(is.na(temp$dbh1))]
+  
+  reineke_index_vect[i] <- reineke_index(diameters = temp$dbh1, area = area)
+}
 
 ## table for figures
-df_figures <- cbind(plots, nb_tree_per_ha = plots$dbh10_inv1/plots$area,
+df_figures <- cbind(plots_all[,c(1,4:5,10:11,17:18,21:22)], 
+                    nb_tree_per_ha = plots$dbh10_inv1/plots$area,
                     nb_sp_per_ha = specnumber(community_round), 
                     fisher_alpha = fisher.alpha(community_round),
-                    shannon_index = diversity(community_round, index = "shannon"))
+                    shannon_index = diversity(community_round, index = "shannon"),
+                    reineke_index = reineke_index_vect)
 
 saveRDS(df_figures, "data/table_for_figures")
+saveRDS(community_round, "data/community_table")
 
-## build grid for interpolation
-world <- map_data("world")
-french_guyana <- world %>%
-  filter(region == "French Guiana")
 
-AmazonForestGrid <- read.table("data/AmazonLowLandForestRaisg.csv", header = T,
-                               sep = ",", row.names = 1)[,1:2]
-colnames(AmazonForestGrid) <- c("long_dd", "lat_dd")
-
-## add les carres vides 
-# truc <-  AmazonForestGrid %>%
-#    filter(long_dd < -52 & long_dd > -53.5) %>%
-#    filter(lat_dd < 5 & lat_dd > 4.3) 
-# truc <- rast(cbind(truc, value = rep(1, nrow(truc))))
-# plot(truc)
-
-region_grid <- rbind(AmazonForestGrid, c(-53.15,4.45), c(-53.15,4.95), 
-                          c(-53.05,4.95), c(-52.75,4.65), c(-52.55,4.65),c(-52.45,4.65)
-)
-region_grid <- cbind(region_grid, value = rep(1, nrow(region_grid)))
-temp <- rast(region_grid)
-polygon <- french_guyana[,1:2] %>%
-  st_as_sf(coords = c("long", "lat")) %>%
-  summarise(geometry = st_combine(geometry)) %>%
-  st_cast("POLYGON")
-temp1 <- mask(temp, polygon)
-temp2 <- disagg(temp1, fact = 16)
-region_grid_finer <- crds(temp2, df=T)
-colnames(region_grid_finer) <- c("long_dd", "lat_dd")
-
-saveRDS(region_grid_finer, "data/grid_for_interpolation")
 

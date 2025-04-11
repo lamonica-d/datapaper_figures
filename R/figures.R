@@ -39,6 +39,16 @@ trees <- trees %>%
   filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
   filter(species != "")
 
+## REMOVE PLOTS WITH AREA < 0.2 !!!!!!
+trees_all <- trees_all %>% 
+  filter(plot_label != "SPO")
+
+plots_all <- plots_all %>% 
+  filter(is.na(area) != T) %>%
+  filter(plot_label != "SPO")
+
+## a faire
+
 ## build grid for interpolation
 region_grid <- AmazonForestGrid %>%
   filter(long_dd < max(french_guyana$long + 0.1) & long_dd > min(french_guyana$long - 0.1)) %>%
@@ -86,9 +96,9 @@ for (i in 1:length(plot_vect)){
     filter(plot == plot_vect[i])
   area <- plots[plots$plot_label == plot_vect[i],]$area
   for (j in 1:length(species_vect)){
-  community_round[i,j] <- round(sum(temp$species == species_vect[j])/area, digits = 0)
+  community_round[i,j] <- sum(temp$species == species_vect[j])
   }
-  nb_sp_per_ha[i] <- length(which(community_round[i,]>0))
+  nb_sp_per_ha[i] <- length(which(community_round[i,]>0))/area
 }
 community_round[is.na(community_round)] <- 0
 
@@ -104,10 +114,10 @@ plots <- cbind(plots, nb_sp_per_ha = nb_sp_per_ha,
 
 ## diversity & fisher's alpha & shannon index per plot
 par(mfrow = c(2,2))
-hist(plots$nb_tree_per_ha, main = "Number of trees per ha", xlab = "")
-hist(plots$nb_sp_per_ha, main = "Number of species per ha", ylab="", xlab = "")
-hist(fisher.alpha(community_round), main = "Fisher's alpha index", xlab = "")
-hist(diversity(community_round, index = "shannon"), main = "Shannon index", ylab="", xlab = "")
+hist(df_figures$nb_tree_per_ha, main = "Number of trees per ha", xlab = "")
+hist(df_figures$nb_sp_per_ha, main = "Number of species per ha", ylab="", xlab = "")
+hist(df_figures$fisher_alpha, main = "Fisher's alpha index", xlab = "")
+hist(df_figures$shannon_index, main = "Shannon index", ylab="", xlab = "")
 
 
 ## loess models

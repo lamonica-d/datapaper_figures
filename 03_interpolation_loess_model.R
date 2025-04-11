@@ -3,13 +3,13 @@
 ##############################################################
 
 ## load data
-region_grid <- readRDS("data/grid_for_interpolation")
-df_figures <- readRDS("data/table_for_figures")
+region_grid <- readRDS("outputs/grid_for_interpolation")
+df_figures <- readRDS("outputs/table_for_figures")
 
 ## run interpolation for each variable/index of interest
 df_plot_variable_list <- list()
 for (i in 1:5){
-  index_in_plots <- 9 + i
+  index_in_plots <- 4 + i
   table_temp <- df_figures[,c(1:3,index_in_plots)]
   colnames(table_temp)[4] <- "variable"
   
@@ -28,4 +28,4 @@ for (i in 1:5){
   df_plot_variable_list[[i]] <- cbind(region_grid_finer, variable = grid.z.predict)
 }
 
-saveRDS(df_plot_variable_list, "data/list_table_for_maps")
+saveRDS(df_plot_variable_list, "outputs/list_table_for_maps")

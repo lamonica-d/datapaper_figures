@@ -11,33 +11,34 @@ library(ggplot2)
 library(terra)
 library(sf)
 library(gridExtra)
+source("R/reineke_index_computation.R")
 
 ## load raw data
-plots_all <- tibble(read.csv("data/plots.csv", sep = "\t"))
-trees_all <- tibble(read.csv("data/trees.csv", sep = "\t"))
+plots_all <- tibble(read.csv("data_raw/plots.csv", sep = "\t"))
+trees_all <- tibble(read.csv("data_raw/trees.csv", sep = "\t"))
 
 ## remove PCQ sampling & plot SPO & plot PSE5B-10B
-trees_all <- trees_all %>% 
+trees <- trees_all %>% 
   filter(subpl_type != "point" & subpl_type != "quarter") %>%
   filter(plot_label != "SPO") %>% 
   filter(plot_label != "PSE5B-10B")
 
-plots_all <- plots_all %>% 
+plots <- plots_all %>% 
   filter(is.na(area) != T) %>%
   filter(plot_label != "SPO") %>% 
   filter(plot_label != "PSE5B-10B")
 
 ## remove plots under 0.2 ha
-small_plots <- plots_all$plot_label[which(plots_all$area < 0.2)]
+small_plots <- plots$plot_label[which(plots$area < 0.2)]
 
-trees_all <- trees_all %>% 
+trees <- trees %>% 
   filter(!(plot_label %in% small_plots))
 
-plots_all <- plots_all %>% 
+plots <- plots %>% 
   filter(!(plot_label %in% small_plots))
 
 ## remove trees without species id & trees < dbh 10cm
-trees_all <- trees_all %>%
+trees <- trees %>%
   filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
   filter(species != "")
 
@@ -45,8 +46,7 @@ trees_all <- trees_all %>%
 community1 <- tibble(plot = trees$plot_label, species = trees$species)
 species_vect <- unique(community1$species)
 plot_vect <- unique(plots$plot_label)
-
-#nb_sp_per_ha <- as.numeric()
+ 
 community_round <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
@@ -56,12 +56,10 @@ for (i in 1:length(plot_vect)){
     community_round[i,j] <- sum(temp$species == species_vect[j])
   }
   community_round[i,] <- round(community_round[i,]/area, digits = 0)
-  #nb_sp_per_ha[i] <- length(which(community_round[i,]>0))
 }
 community_round[is.na(community_round)] <- 0
 
 ## Reineke index computation
-trees <- trees_all[,c(1:2,17,23,27)]
 reineke_index_vect <- as.numeric()
 for (i in 1:length(plot_vect)){
   area <- plots[plots$plot_label == plot_vect[i],]$area
@@ -76,15 +74,15 @@ for (i in 1:length(plot_vect)){
 }
 
 ## table for figures
-df_figures <- cbind(plots_all[,c(1,4:5,10:11,17:18,21:22)], 
+df_figures <- cbind(plots[,c(1,4:5,10)], 
                     nb_tree_per_ha = plots$dbh10_inv1/plots$area,
                     nb_sp_per_ha = specnumber(community_round), 
                     fisher_alpha = fisher.alpha(community_round),
                     shannon_index = diversity(community_round, index = "shannon"),
                     reineke_index = reineke_index_vect)
 
-saveRDS(df_figures, "data/table_for_figures")
-saveRDS(community_round, "data/community_table")
+saveRDS(df_figures, "outputs/table_for_figures")
+saveRDS(community_round, "outputs/community_table")
 
 
 

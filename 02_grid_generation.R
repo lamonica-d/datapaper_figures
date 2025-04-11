@@ -16,7 +16,7 @@ world <- map_data("world")
 french_guyana <- world %>%
   filter(region == "French Guiana")
 
-AmazonForestGrid <- read.table("data/AmazonLowLandForestRaisg.csv", header = T,
+AmazonForestGrid <- read.table("data_raw/AmazonLowLandForestRaisg.csv", header = T,
                                sep = ",", row.names = 1)[,1:2]
 colnames(AmazonForestGrid) <- c("long_dd", "lat_dd")
 
@@ -41,4 +41,4 @@ temp2 <- disagg(temp1, fact = 16)
 region_grid_finer <- crds(temp2, df=T)
 colnames(region_grid_finer) <- c("long_dd", "lat_dd")
 
-saveRDS(region_grid_finer, "data/grid_for_interpolation")
+saveRDS(region_grid_finer, "outputs/grid_for_interpolation")

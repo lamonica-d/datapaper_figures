@@ -17,24 +17,25 @@ world <- map_data("world")
 french_guyana <- world %>%
   filter(region == "French Guiana")
 
-community_table <- readRDS("outputs/community_table")
-df_figures <- readRDS("outputs/table_for_figures")
-df_maps_list <- readRDS("outputs/list_table_for_maps")
+community_table <- readRDS("outputs/community_table.RDS")
+df_figures <- readRDS("outputs/table_for_figures.RDS")
+df_maps_list <- readRDS("outputs/list_table_for_maps.RDS")
 
-## species acc computation
+## species acc computation & plot
 sac <- specaccum(community_table)
+pdf(file = "figures/species_acc_v3.pdf", height = 8, width = 8)
+par(mfrow = c(1,1))
+plot(sac, ci.type="polygon", ci.col="lightblue", ylab = "Cumulative number of species",
+     xlab = "Sites", main = "Species accumulation curve")
+dev.off()
 
-## plot of species accumulation curve & histogrammmes of indexes
-
-pdf(file = "figures/species_acc_hist_v2.pdf", height = 9, width = 6)
-par(mfrow = c(3,2))
-plot(sac, ci.type="polygon", ci.col="lightgreen", ylab = "Cumulative number of species")
+## hist + maps of indexes
 hist(df_figures$nb_tree_per_ha, main = "Number of trees per ha", xlab = "")
 hist(df_figures$nb_sp_per_ha, main = "Number of species per ha",  xlab = "")
 hist(df_figures$fisher_alpha, main = "Fisher's alpha index", xlab = "")
 hist(df_figures$shannon_index, main = "Shannon index",  xlab = "")
 hist(df_figures$reineke_index, main = "Reineke index",  xlab = "")
-dev.off()
+
 
 ## maps of interpolated variables & plots
 

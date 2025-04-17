@@ -28,6 +28,11 @@ plots <- plots_all %>%
   filter(plot_label != "SPO") %>% 
   filter(plot_label != "PSE5B-10B")
 
+## remove trees without species id & trees < dbh 10cm
+trees <- trees %>%
+  filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
+  filter(species != "")
+
 ## remove plots under 0.2 ha
 small_plots <- plots$plot_label[which(plots$area < 0.2)]
 
@@ -37,27 +42,23 @@ trees <- trees %>%
 plots <- plots %>% 
   filter(!(plot_label %in% small_plots))
 
-## remove trees without species id & trees < dbh 10cm
-trees <- trees %>%
-  filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
-  filter(species != "")
-
 ## community dataframe
 community1 <- tibble(plot = trees$plot_label, species = trees$species)
 species_vect <- unique(community1$species)
 plot_vect <- unique(plots$plot_label)
  
-community_round <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
+community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
   area <- plots[plots$plot_label == plot_vect[i],]$area
+  
   for (j in 1:length(species_vect)){
-    community_round[i,j] <- sum(temp$species == species_vect[j])
+    community[i,j] <- sum(temp$species == species_vect[j])
   }
-  community_round[i,] <- round(community_round[i,]/area, digits = 0)
+  community[i,] <- ceiling(community[i,]/area)
 }
-community_round[is.na(community_round)] <- 0
+community[is.na(community)] <- 0
 
 ## Reineke index computation
 reineke_index_vect <- as.numeric()
@@ -76,13 +77,13 @@ for (i in 1:length(plot_vect)){
 ## table for figures
 df_figures <- cbind(plots[,c(1,4:5,10)], 
                     nb_tree_per_ha = plots$dbh10_inv1/plots$area,
-                    nb_sp_per_ha = specnumber(community_round), 
-                    fisher_alpha = fisher.alpha(community_round),
-                    shannon_index = diversity(community_round, index = "shannon"),
+                    nb_sp_per_ha = round(specnumber(community)/plots$area,digits =0), 
+                    fisher_alpha = fisher.alpha(community),
+                    shannon_index = diversity(community, index = "shannon"),
                     reineke_index = reineke_index_vect)
 
-saveRDS(df_figures, "outputs/table_for_figures")
-saveRDS(community_round, "outputs/community_table")
+saveRDS(df_figures, "outputs/table_for_figures.RDS")
+saveRDS(community, "outputs/community_table.RDS")
 
 
 

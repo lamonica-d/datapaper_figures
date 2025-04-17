@@ -41,4 +41,4 @@ temp2 <- disagg(temp1, fact = 16)
 region_grid_finer <- crds(temp2, df=T)
 colnames(region_grid_finer) <- c("long_dd", "lat_dd")
 
-saveRDS(region_grid_finer, "outputs/grid_for_interpolation")
+saveRDS(region_grid_finer, "outputs/grid_for_interpolation.RDS")

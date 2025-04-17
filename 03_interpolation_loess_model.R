@@ -3,8 +3,8 @@
 ##############################################################
 
 ## load data
-region_grid <- readRDS("outputs/grid_for_interpolation")
-df_figures <- readRDS("outputs/table_for_figures")
+region_grid <- readRDS("outputs/grid_for_interpolation.RDS")
+df_figures <- readRDS("outputs/table_for_figures.RDS")
 
 ## run interpolation for each variable/index of interest
 df_plot_variable_list <- list()
@@ -18,14 +18,14 @@ for (i in 1:5){
                    normalize = TRUE, family = "gaussian",
                    surface = "direct")
   
-  grid.z.predict <- predict(z.loess, region_grid_finer, se = T)
+  grid.z.predict <- predict(z.loess, region_grid, se = T)
   
   min_variable <- min(table_temp$variable)
   max_variable <- max(table_temp$variable)
   grid.z.predict$fit[grid.z.predict$fit < min_variable] <- min_variable
   grid.z.predict$fit[grid.z.predict$fit > max_variable] <- max_variable
   
-  df_plot_variable_list[[i]] <- cbind(region_grid_finer, variable = grid.z.predict)
+  df_plot_variable_list[[i]] <- cbind(region_grid, variable = grid.z.predict)
 }
 
-saveRDS(df_plot_variable_list, "outputs/list_table_for_maps")
+saveRDS(df_plot_variable_list, "outputs/list_table_for_maps.RDS")

@@ -58,8 +58,9 @@ data <- tibble(plot_label = plot_vect,
 )
 
 pdf(file = "figures/small_plots.pdf", height = 8, width = 8)
-plot(data$area, data$nb_sp_per_ha, xlab = "Plot area", 
+plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", 
      ylab = "Number of species per ha", pch = 16)
 abline(v = 0.2, lty = 2, col = "red")
 abline(lm(data$nb_sp_per_ha ~ data$area), col = "DarkGrey")
 dev.off()
+

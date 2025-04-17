@@ -11,10 +11,11 @@ library(ggplot2)
 library(terra)
 library(sf)
 library(gridExtra)
+library(cowplot)
 
 ## load data
 world <- map_data("world")
-french_guyana <- world %>%
+french_guiana <- world %>%
   filter(region == "French Guiana")
 
 community_table <- readRDS("outputs/community_table.RDS")
@@ -29,19 +30,28 @@ plot(sac, ci.type="polygon", ci.col="lightblue", ylab = "Cumulative number of sp
      xlab = "Sites", main = "Species accumulation curve")
 dev.off()
 
-## hist + maps of indexes
-hist(df_figures$nb_tree_per_ha, main = "Number of trees per ha", xlab = "")
-hist(df_figures$nb_sp_per_ha, main = "Number of species per ha",  xlab = "")
-hist(df_figures$fisher_alpha, main = "Fisher's alpha index", xlab = "")
-hist(df_figures$shannon_index, main = "Shannon index",  xlab = "")
-hist(df_figures$reineke_index, main = "Reineke index",  xlab = "")
-
-
-## maps of interpolated variables & plots
-
-variable_names <- c("Nb of trees per ha", "Nb of species per ha", 
+## histograms of observed variables
+variable_names <- c("Number of trees per hectare", "Number of species per hectare", 
                     "Fisher's alpha index", "Shannon index", "Reineke index")
+binwidth_vect <- c(25,10,5,0.09,25)
 
+hist_plot <- list()
+for (i in 1:length(variable_names)){
+hist_plot[[i]] <- ggplot(df_figures[df_figures$index == unique(df_figures$index)[i],], 
+                         aes(x=values)) + 
+    geom_histogram(color="black", fill="white", binwidth = binwidth_vect[i])+
+    geom_vline(aes(xintercept=mean(values)), color="red", 
+               linetype="dashed", lwd = 1.3) +
+  theme_minimal()+
+  xlab(variable_names[i])+
+  ylab("Count")+
+  xlab("")+
+  ggtitle(variable_names[i])
+}
+  
+## maps of interpolated variables
+legend_names <- c("Trees/ha", "Species/ha", 
+                    "Fisher's alpha index", "Shannon index", "Reineke index")
 maps_plot <- list()
 for (i in 1:length(variable_names)){
 maps_plot[[i]] <- ggplot() +
@@ -49,16 +59,23 @@ maps_plot[[i]] <- ggplot() +
   geom_raster(data = df_maps_list[[i]], aes(x=long_dd, y=lat_dd, 
                                                      fill = variable.fit)) +
   scale_fill_viridis_c() +
-  geom_point(data = df_figures, aes(x=long_dd, y=lat_dd)) +
+  geom_point(data = df_figures, aes(x=long_dd, y=lat_dd), colour = "darkgrey", shape=3) +
   theme_minimal()+
-  labs(fill = variable_names[i])+
-  geom_polygon(data = french_guyana, aes(x=long, y = lat), fill=NA, colour="red")
+  labs(fill =legend_names[i])+
+  geom_polygon(data = french_guiana, aes(x=long, y = lat), fill=NA, colour="black")+
+  theme(legend.position = "right")+
+  xlab("Longitude")+
+  ylab("Latitude")
+
 }
 
-pdf(file = "figures/all_maps_v2.pdf", height = 8, width = 8)
-grid.arrange(maps_plot[[1]], maps_plot[[2]],
-             maps_plot[[3]], maps_plot[[4]], maps_plot[[5]], ncol = 3)
+## print & save all plots
+for (i in 1:length(variable_names)){
+pdf(file = paste0("figures/hist_maps_var",i,".pdf", sep = ""), height = 6, width = 12)
+print(plot_grid(hist_plot[[i]], maps_plot[[i]], align = "h", nrow = 1,
+                rel_widths = c(0.8/2, 1.2/2)))
 dev.off()
+}
 
 
 

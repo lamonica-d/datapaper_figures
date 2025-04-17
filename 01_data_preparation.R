@@ -2,6 +2,7 @@
 ###                     DATA PREPARATION                   ###
 ##############################################################
 
+library(tidyr)
 library(stringr)
 library(dplyr)
 library(tibble)
@@ -81,6 +82,10 @@ df_figures <- cbind(plots[,c(1,4:5,10)],
                     fisher_alpha = fisher.alpha(community),
                     shannon_index = diversity(community, index = "shannon"),
                     reineke_index = reineke_index_vect)
+
+df_figures <- df_figures %>% 
+  pivot_longer(c(nb_tree_per_ha, nb_sp_per_ha, fisher_alpha, shannon_index, reineke_index),
+               names_to = "index", values_to = "values")
 
 saveRDS(df_figures, "outputs/table_for_figures.RDS")
 saveRDS(community, "outputs/community_table.RDS")

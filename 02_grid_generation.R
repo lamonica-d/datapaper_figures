@@ -12,31 +12,30 @@ library(terra)
 library(sf)
 library(gridExtra)
 
+## load data
 world <- map_data("world")
-french_guyana <- world %>%
+french_guiana <- world %>%
   filter(region == "French Guiana")
 
 AmazonForestGrid <- read.table("data_raw/AmazonLowLandForestRaisg.csv", header = T,
                                sep = ",", row.names = 1)[,1:2]
 colnames(AmazonForestGrid) <- c("long_dd", "lat_dd")
 
-## add les carres vides 
-# truc <-  AmazonForestGrid %>%
-#    filter(long_dd < -52 & long_dd > -53.5) %>%
-#    filter(lat_dd < 5 & lat_dd > 4.3) 
-# truc <- rast(cbind(truc, value = rep(1, nrow(truc))))
-# plot(truc)
-
+## add 6 missing pixels
 region_grid <- rbind(AmazonForestGrid, c(-53.15,4.45), c(-53.15,4.95), 
                      c(-53.05,4.95), c(-52.75,4.65), c(-52.55,4.65),c(-52.45,4.65)
 )
+
+## only french guiana
 region_grid <- cbind(region_grid, value = rep(1, nrow(region_grid)))
 temp <- rast(region_grid)
-polygon <- french_guyana[,1:2] %>%
+polygon <- french_guiana[,1:2] %>%
   st_as_sf(coords = c("long", "lat")) %>%
   summarise(geometry = st_combine(geometry)) %>%
   st_cast("POLYGON")
 temp1 <- mask(temp, polygon)
+
+## finer resolution
 temp2 <- disagg(temp1, fact = 16)
 region_grid_finer <- crds(temp2, df=T)
 colnames(region_grid_finer) <- c("long_dd", "lat_dd")

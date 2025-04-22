@@ -21,6 +21,7 @@ french_guiana <- world %>%
 community_table <- readRDS("outputs/community_table.RDS")
 df_figures <- readRDS("outputs/table_for_figures.RDS")
 df_maps_list <- readRDS("outputs/list_table_for_maps.RDS")
+df_most_rep_sp <- readRDS("outputs/table_for_most_rep_sp.RDS")
 
 ## species acc computation & plot
 sac <- specaccum(community_table)
@@ -28,6 +29,32 @@ pdf(file = "figures/species_acc_v3.pdf", height = 8, width = 8)
 par(mfrow = c(1,1))
 plot(sac, ci.type="polygon", ci.col="lightblue", ylab = "Cumulative number of species",
      xlab = "Sites", main = "Species accumulation curve")
+dev.off()
+
+## histograms of the most represented species
+plot_most_rep_sp <- ggplot(df_most_rep_sp, aes(x=species, y = nb_plot)) + 
+  geom_bar(color="grey", fill="grey", stat = "identity", width = 0.5)+
+  theme_minimal()+
+  ylab("Number of plots")+
+  xlab("")+
+  ggtitle("Number of sampled plots that contain the 15 most represented species")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1.05, hjust=1.05))
+
+pdf(file = "figures/most_rep_sp.pdf", height = 6, width = 10)
+plot_most_rep_sp
+dev.off()
+
+plot_most_rep_sp_percent <- ggplot(df_most_rep_sp, aes(x=species, y = percent)) + 
+  geom_bar(color="grey", fill="grey", stat = "identity", width = 0.5)+
+  theme_minimal()+
+  ylab("Percentage of plots")+
+  xlab("")+
+  ggtitle("Number of sampled plots that contain the 15 most represented species")+
+  theme(axis.text.x = element_text(angle = 45, vjust = 1.05, hjust=1.05))+
+  ylim(c(0,100))
+
+pdf(file = "figures/most_rep_sp_percent.pdf", height = 6, width = 10)
+plot_most_rep_sp_percent
 dev.off()
 
 ## histograms of observed variables

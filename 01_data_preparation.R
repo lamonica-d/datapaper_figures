@@ -60,6 +60,18 @@ for (i in 1:length(plot_vect)){
   community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
+colnames(community) <- species_vect
+rownames(community) <- plot_vect
+
+## 15 species that are the most represented across plots
+species_in_plots <- apply(X = community, MARGIN = 2, FUN = function(x) sum(x>0))
+most_rep_sp <- sort(species_in_plots, decreasing = T)[1:15]
+df_most_rep_sp_abondance <- as.data.frame(community) %>%
+  select(names(most_rep_sp))
+df_most_rep_sp_presence <- ifelse(df_most_rep_sp_abondance == 0, 0, 1)
+df_most_rep_sp_presence_count <- tibble(species = names(most_rep_sp), 
+                                        nb_plot = colSums(df_most_rep_sp_presence),
+                                        percent = colSums(df_most_rep_sp_presence)/length(plot_vect)*100)
 
 ## Reineke index computation
 reineke_index_vect <- as.numeric()
@@ -89,6 +101,9 @@ df_figures <- df_figures %>%
 
 saveRDS(df_figures, "outputs/table_for_figures.RDS")
 saveRDS(community, "outputs/community_table.RDS")
+saveRDS(df_most_rep_sp_presence_count, "outputs/table_for_most_rep_sp.RDS")
+
+
 
 
 

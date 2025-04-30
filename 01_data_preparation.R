@@ -88,17 +88,18 @@ for (i in 1:length(plot_vect)){
 }
 
 ## table for figures
-df_figures <- cbind(plots[,c(1,4:5,10)], 
+df_interpol <- cbind(plots[,c(1,4:5,10)], 
                     nb_tree_per_ha = plots$dbh10_inv1/plots$area,
                     nb_sp_per_ha = round(specnumber(community)/plots$area,digits =0), 
                     fisher_alpha = fisher.alpha(community),
                     shannon_index = diversity(community, index = "shannon"),
                     reineke_index = reineke_index_vect)
 
-df_figures <- df_figures %>% 
+df_figures <- df_interpol %>% 
   pivot_longer(c(nb_tree_per_ha, nb_sp_per_ha, fisher_alpha, shannon_index, reineke_index),
                names_to = "index", values_to = "values")
 
+saveRDS(df_interpol, "outputs/table_for_interpolation.RDS")
 saveRDS(df_figures, "outputs/table_for_figures.RDS")
 saveRDS(community, "outputs/community_table.RDS")
 saveRDS(df_most_rep_sp_presence_count, "outputs/table_for_most_rep_sp.RDS")

@@ -36,7 +36,7 @@ polygon <- french_guiana[,1:2] %>%
 temp1 <- mask(temp, polygon)
 
 ## finer resolution
-temp2 <- disagg(temp1, fact = 16)
+temp2 <- disagg(temp1, fact = 4)
 region_grid_finer <- crds(temp2, df=T)
 colnames(region_grid_finer) <- c("long_dd", "lat_dd")
 

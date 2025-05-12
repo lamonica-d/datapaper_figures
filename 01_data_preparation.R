@@ -18,16 +18,24 @@ source("R/reineke_index_computation.R")
 plots_all <- tibble(read.csv("data_raw/plots.csv", sep = "\t"))
 trees_all <- tibble(read.csv("data_raw/trees.csv", sep = "\t"))
 
-## remove PCQ sampling & plot SPO & plot PSE5B-10B
+## remove PCQ sampling & plot SP* & plot PSE5B-10B & plot TRIE5
 trees <- trees_all %>% 
   filter(subpl_type != "point" & subpl_type != "quarter") %>%
   filter(plot_label != "SPO") %>% 
-  filter(plot_label != "PSE5B-10B")
+  filter(plot_label != "PSE5B-10B") %>%
+  filter(plot_label != "SPM") %>%
+  filter(plot_label != "SPN") %>%
+  filter(plot_label != "SPP") %>%
+  filter(plot_label != "TRIE5")
 
 plots <- plots_all %>% 
   filter(is.na(area) != T) %>%
   filter(plot_label != "SPO") %>% 
-  filter(plot_label != "PSE5B-10B")
+  filter(plot_label != "PSE5B-10B") %>%
+  filter(plot_label != "SPM") %>%
+  filter(plot_label != "SPN") %>%
+  filter(plot_label != "SPP") %>%
+  filter(plot_label != "TRIE5")
 
 ## remove trees without species id & trees < dbh 10cm
 trees <- trees %>%

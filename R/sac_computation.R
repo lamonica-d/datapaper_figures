@@ -1,10 +1,8 @@
 ##############################################################
-###                   SPECIES INDICATORS                   ###
+###        SPECIES ACCUMULATION CURVE COMPUTATION          ###
 ##############################################################
 
 ## exhaustive & no monodominance plots
-## histogram of the number of species per hectare 
-## species accumulation curve
 
 library(tidyr)
 library(stringr)
@@ -13,7 +11,10 @@ library(tibble)
 library(vegan)
 library(maps)
 library(ggplot2)
+library(terra)
+library(sf)
 library(gridExtra)
+library(EntropyEstimation)
 
 #1) DATA PREPARATION
 
@@ -69,43 +70,10 @@ community[is.na(community)] <- 0
 colnames(community) <- species_vect
 rownames(community) <- plot_vect
 
-#2) HISTOGRAM OF NUMBER OF SPECIES PER HECTARE
-
-## table for figures
-df_temp <- cbind(plots[,c(1,4:5,10)], 
-                 nb_sp_per_ha = round(specnumber(community)/plots$area,digits =0)
-)
-hist_nbspha <- ggplot(df_temp, aes(x=nb_sp_per_ha)) + 
-  geom_histogram(color="black", fill="grey", binwidth = 10)+
-  geom_vline(aes(xintercept=mean(nb_sp_per_ha)), color="red", 
-             linetype="dashed", lwd = 1.3) +
-  theme_minimal()+
-  ylab("Count")+
-  xlab("")+
-  ggtitle("Number of species per hectare")
-
-## print & save
-pdf(file = paste0("figures/hist_nb_sp_per_ha.pdf", sep = ""), height = 6, width = 6)
-print(hist_nbspha)
-dev.off()
-
-#3) SPECIES ACCUMULATION CURVE
+#2) SPECIES ACCUMULATION CURVE COMPUTATION
 
 Ns <- colSums(community)
-gsValues <- readRDS(file ="outputs/gsValues.RDS")
-SAC <- cumsum(gsValues)
+gsValues <- sapply(1:(sum(Ns)-1), function(r) GenSimp.z(Ns, r))
 
-## plot
-sac_plot <- ggplot(data.frame(x = 0:(sum(Ns)-1), 
-                  y = c(0, SAC)), 
-       aes(x = x, y = y)) +
-  geom_line() +
-  theme_minimal()+
-  # geom_hline(aes(yintercept=quantile(SAC, probs = 0.9)), color="red", 
-  #            linetype="dashed", lwd = 1.3) +
-  labs(x = "Number of trees", y = "Number of species")
-
-## print & save
-pdf(file = paste0("figures/sac.pdf", sep = ""), height = 6, width = 6)
-print(sac_plot)
-dev.off()
+## save
+saveRDS(gsValues, file ="outputs/gsValues.RDS")

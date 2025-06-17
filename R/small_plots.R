@@ -10,8 +10,6 @@ library(tibble)
 library(vegan)
 library(maps)
 library(ggplot2)
-library(terra)
-library(sf)
 library(gridExtra)
 
 ## load raw data

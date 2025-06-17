@@ -11,30 +11,31 @@ library(ggplot2)
 library(terra)
 library(sf)
 library(gridExtra)
-source("R/reineke_index_computation.R")
 
 ## load raw data
-plots_all <- tibble(read.csv("data_raw/plots.csv", sep = "\t"))
-trees_all <- tibble(read.csv("data_raw/trees.csv", sep = "\t"))
-
-## remove PCQ sampling & plot SPO & plot PSE5B-10B
-trees <- trees_all %>% 
-  filter(subpl_type != "point" & subpl_type != "quarter") %>%
-  filter(plot_label != "SPO") %>% 
-  filter(plot_label != "PSE5B-10B")
+plots_all <- tibble(read.csv("data_raw/plots.csv", sep = ","))
+trees_all <- tibble(read.csv("data_raw/trees.csv", sep = ","))
 
 plots <- plots_all %>% 
-  filter(is.na(area) != T) %>%
-  filter(plot_label != "SPO") %>% 
+  filter(type == "exhaustive") %>%
+  filter(!(plot_label %in% c("SPC", "SPD", "SPM", "SPN", "SPO", "SPP"))) %>% 
+  filter(plot_label != "TRIES5") %>%
   filter(plot_label != "PSE5B-10B")
+
+trees <- trees_all %>%
+  filter(plot_label %in% unique(plots$plot_label))
 
 ## remove trees without species id & trees < dbh 10cm
 trees <- trees %>%
-  filter(dbh1 >= 10 | dbh2 >= 10 | (is.na(dbh1)&is.na(dbh2))) %>%
-  filter(species != "")
+  filter(dbh_before_2000 >= 10 | dbh_after_2000 >= 10) %>%
+  filter(!is.na(species)) %>%
+  filter(!is.na(genus))
+
+trees <- cbind(trees, genus_species =  str_c(trees$genus, trees$species, sep = "_"))
 
 ## community dataframe
-community1 <- tibble(plot = trees$plot_label, species = trees$species)
+community1 <- tibble(plot = trees$plot_label,
+                     species = trees$genus_species)
 species_vect <- unique(community1$species)
 plot_vect <- unique(plots$plot_label)
 
@@ -58,8 +59,8 @@ data <- tibble(plot_label = plot_vect,
 )
 
 pdf(file = "figures/small_plots.pdf", height = 8, width = 8)
-plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", 
-     ylab = "Number of species per ha", pch = 16)
+plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", ylim = c(0,705),
+     ylab = "Number of species per ha", pch = 16, las = 1)
 abline(v = 0.2, lty = 2, col = "red")
 abline(lm(data$nb_sp_per_ha ~ data$area), col = "DarkGrey")
 dev.off()

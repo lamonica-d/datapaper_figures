@@ -12,6 +12,7 @@ library(vegan)
 library(maps)
 library(ggplot2)
 library(gridExtra)
+library(cowplot)
 
 #1) DATA PREPARATION
 
@@ -87,7 +88,7 @@ maps_simpson <- ggplot() +
 ## print & save
 pdf(file = paste0("figures/hist_maps_simpson.pdf", sep = ""), height = 6, width = 12)
 print(plot_grid(hist_simpson, maps_simpson, align = "h", nrow = 1,
-                  rel_widths = c(0.8/2, 1.2/2)))
+                  rel_widths = c(1/2, 1/2)))
 dev.off()
 
 

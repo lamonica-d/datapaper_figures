@@ -1,6 +1,8 @@
-##############################################################
-###             SMALL PLOTS & NUMBER OF SPECIES            ###
-##############################################################
+#######################################################
+###               SMALL PLOTS ANALYSIS              ###
+#######################################################
+
+## exhaustive & no monodominance plots
 
 library(stringr)
 library(dplyr)
@@ -28,14 +30,13 @@ trees <- trees_all %>%
 ## remove trees without species id & trees < dbh 10cm
 trees <- trees %>%
   filter(dbh_before_2000 >= 10 | dbh_after_2000 >= 10) %>%
-  filter(!is.na(species)) %>%
-  filter(!is.na(genus))
+  filter(!is.na(species))
 
-trees <- cbind(trees, genus_species =  str_c(trees$genus, trees$species, sep = "_"))
+trees <- cbind(trees, fam_gen_sp =  str_c(trees$family, trees$genus, trees$species, sep = "_"))
 
 ## community dataframe
 community1 <- tibble(plot = trees$plot_label,
-                     species = trees$genus_species)
+                     species = trees$fam_gen_sp)
 species_vect <- unique(community1$species)
 plot_vect <- unique(plots$plot_label)
 
@@ -43,12 +44,12 @@ community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
-  area <- plots[plots$plot_label == plot_vect[i],]$area
+  #area <- plots[plots$plot_label == plot_vect[i],]$area
   
   for (j in 1:length(species_vect)){
-    community[i,j] <- sum(temp$species == species_vect[j])
+    community[i,j] <- sum(match(temp$species, species_vect[j]), na.rm = T)
   }
-  community[i,] <- ceiling(community[i,]/area)
+  #community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
 
@@ -59,7 +60,7 @@ data <- tibble(plot_label = plot_vect,
 )
 
 pdf(file = "figures/small_plots.pdf", height = 8, width = 8)
-plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", ylim = c(0,705),
+plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", ylim = c(0,max(data$nb_sp_per_ha)+1),
      ylab = "Number of species per ha", pch = 16, las = 1)
 abline(v = 0.2, lty = 2, col = "red")
 abline(lm(data$nb_sp_per_ha ~ data$area), col = "DarkGrey")

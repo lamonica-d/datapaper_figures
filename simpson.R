@@ -1,8 +1,8 @@
 #######################################################
-###                    ALL PLOTS                    ###
+###                SIMPSON INDEX                    ###
 #######################################################
 
-## Simpson index
+## all plots
 
 library(tidyr)
 library(stringr)

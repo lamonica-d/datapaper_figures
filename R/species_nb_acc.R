@@ -95,17 +95,20 @@ Ns <- colSums(community)
 gsValues <- readRDS(file ="outputs/gsValues.RDS")
 SAC <- cumsum(gsValues)
 
+# nb tree for 80 or 90% of species
+x_inter <- min(which(c(0, SAC) > quantile(SAC, probs = 0.8)))
+
 ## plot
 sac_plot <- ggplot(data.frame(x = 0:(sum(Ns)-1), 
                   y = c(0, SAC)), 
        aes(x = x, y = y)) +
   geom_line() +
   theme_minimal()+
-  # geom_hline(aes(yintercept=quantile(SAC, probs = 0.9)), color="red", 
-  #            linetype="dashed", lwd = 1.3) +
+  geom_vline(aes(xintercept=x_inter), color="red", 
+             linetype="dashed", lwd = 1.3) +
   labs(x = "Number of trees", y = "Number of species")
 
 ## print & save
-pdf(file = paste0("figures/sac.pdf", sep = ""), height = 6, width = 6)
+pdf(file = paste0("figures/sac_0.8.pdf", sep = ""), height = 6, width = 6)
 print(sac_plot)
 dev.off()

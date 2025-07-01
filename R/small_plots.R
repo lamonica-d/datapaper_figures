@@ -42,12 +42,9 @@ community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
-  #area <- plots[plots$plot_label == plot_vect[i],]$area
-  
   for (j in 1:length(species_vect)){
     community[i,j] <- sum(match(temp$species, species_vect[j]), na.rm = T)
   }
-  #community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
 
@@ -58,9 +55,10 @@ data <- tibble(plot_label = plot_vect,
 )
 
 pdf(file = "figures/small_plots.pdf", height = 8, width = 8)
-plot(data$area, data$nb_sp_per_ha, xlab = "Plot area (ha)", ylim = c(0,max(data$nb_sp_per_ha)+1),
-     ylab = "Number of species per ha", pch = 16, las = 1)
-abline(v = 0.2, lty = 2, col = "red")
-abline(lm(data$nb_sp_per_ha ~ data$area), col = "DarkGrey")
+ggplot(data)+
+  geom_point(aes(x = area, y = nb_sp_per_ha))+
+  xlab("Plot area (ha)")+
+  ylab("Number of species per ha")+
+  geom_vline(aes(xintercept=0.2), colour="red", linetype="dashed", lwd = 1.3)
 dev.off()
 

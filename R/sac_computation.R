@@ -2,7 +2,7 @@
 ###        SPECIES ACCUMULATION CURVE COMPUTATION          ###
 ##############################################################
 
-## exhaustive & no monodominance plots
+## all plots
 
 library(tidyr)
 library(stringr)
@@ -22,27 +22,10 @@ library(EntropyEstimation)
 plots_all <- tibble(read.csv("data_raw/plots.csv", sep = ","))
 trees_all <- tibble(read.csv("data_raw/trees.csv", sep = ","))
 
-## remove PCQ plots & monodominance
-plots <- plots_all %>% 
-  filter(type == "exhaustive") %>%
-  filter(!(plot_label %in% c("SPC", "SPD", "SPM", "SPN", "SPO", "SPP"))) %>% 
-  filter(plot_label != "TRIES5") %>%
-  filter(plot_label != "PSE5B-10B")
-
-trees <- trees_all %>%
-  filter(plot_label %in% unique(plots$plot_label))
-
-## remove plots under 0.2 ha
-small_plots <- plots$plot_label[which(plots$area < 0.2)]
-
-trees <- trees %>% 
-  filter(!(plot_label %in% small_plots))
-
-plots <- plots %>% 
-  filter(!(plot_label %in% small_plots))
+plots <- plots_all
 
 ## remove trees without species id & trees < dbh 10cm
-trees <- trees %>%
+trees <- trees_all %>%
   filter(dbh_before_2000 >= 10 | dbh_after_2000 >= 10) %>%
   filter(!is.na(species))
 
@@ -58,12 +41,10 @@ community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
-  #area <- plots[plots$plot_label == plot_vect[i],]$area
-  
+
   for (j in 1:length(species_vect)){
     community[i,j] <- sum(match(temp$species, species_vect[j]), na.rm = T)
   }
-  #community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
 
@@ -73,7 +54,42 @@ rownames(community) <- plot_vect
 #2) SPECIES ACCUMULATION CURVE COMPUTATION
 
 Ns <- colSums(community)
-gsValues <- sapply(1:(sum(Ns)-1), function(r) GenSimp.z(Ns, r))
 
-## save
-saveRDS(gsValues, file ="outputs/gsValues.RDS")
+#### !!!! DO NOT RUN, SUPER LONG !!! ########################################
+# gsValues <- sapply(1:(sum(Ns)-1), function(r) GenSimp.z(Ns, r))
+# gsValues_sd <- sapply(1:(sum(Ns)-1), function(r) GenSimp.sd(Ns, r))
+# ic <- qnorm(1 - 0.05/2) * gsValues_sd/sqrt(sum(Ns))
+# 
+# df_gsValues <- data.frame(mean = gsValues, sd = gsValues_sd,
+#                           lower = gsValues - ic, upper= gsValues + ic)
+# 
+# ## save
+# saveRDS(df_gsValues, file ="outputs/dataframe_gsValues.RDS")
+#############################################################################
+
+#3) SPECIES ACCUMULATION CURVE
+## load
+df_gsValues <- readRDS(file ="outputs/dataframe_gsValues.RDS")
+
+SAC <- cumsum(df_gsValues$mean)
+SAC_lower <- cumsum(df_gsValues$lower)
+SAC_upper <- cumsum(df_gsValues$upper)
+df_plotsac <- data.frame(x = 0:(sum(Ns)-1), ymean = c(0, SAC), 
+                         ylower = c(0, SAC_lower),yupper = c(0, SAC_upper))
+
+# nb tree for 80 or 90% of species
+x_inter <- min(which(c(0, SAC) > quantile(SAC, probs = 0.8)))
+
+## plot
+sac_plot <- ggplot(data = df_plotsac) +
+  geom_ribbon(aes(x=x, ymin = ylower, ymax = yupper), fill = "lightblue", alpha = 0.8) +
+  geom_line(aes(x = x, y = ymean)) +
+  geom_vline(aes(xintercept=x_inter), colour="red", 
+             linetype="dashed", lwd = 1.3) +
+  labs(x = "Number of trees", y = "Number of species")+
+  theme_get()
+
+## print & save
+pdf(file = paste0("figures/sac_0.8.pdf", sep = ""), height = 6, width = 6)
+print(sac_plot)
+dev.off()

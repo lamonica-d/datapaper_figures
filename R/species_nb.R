@@ -1,10 +1,9 @@
 ##############################################################
-###                   SPECIES INDICATORS                   ###
+###             NUMBER OF SPECIES PER HECTARE              ###
 ##############################################################
 
 ## exhaustive & no monodominance plots
 ## histogram of the number of species per hectare 
-## species accumulation curve
 
 library(tidyr)
 library(stringr)
@@ -57,12 +56,9 @@ community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
-  #area <- plots[plots$plot_label == plot_vect[i],]$area
-  
   for (j in 1:length(species_vect)){
     community[i,j] <- sum(match(temp$species, species_vect[j]), na.rm = T)
   }
-  #community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
 
@@ -75,40 +71,16 @@ rownames(community) <- plot_vect
 df_temp <- cbind(plots[,c(1,4:5,10)], 
                  nb_sp_per_ha = round(specnumber(community)/plots$area,digits =0)
 )
+
 hist_nbspha <- ggplot(df_temp, aes(x=nb_sp_per_ha)) + 
-  geom_histogram(color="black", fill="grey", binwidth = 10)+
+  geom_histogram(color="black", fill="yellow", binwidth = 10, alpha = 0.2)+
   geom_vline(aes(xintercept=mean(nb_sp_per_ha)), color="red", 
              linetype="dashed", lwd = 1.3) +
-  theme_minimal()+
   ylab("Count")+
-  xlab("")+
-  ggtitle("Number of species per hectare")
+  xlab("")
 
 ## print & save
 pdf(file = paste0("figures/hist_nb_sp_per_ha.pdf", sep = ""), height = 6, width = 6)
 print(hist_nbspha)
 dev.off()
 
-#3) SPECIES ACCUMULATION CURVE
-
-Ns <- colSums(community)
-gsValues <- readRDS(file ="outputs/gsValues.RDS")
-SAC <- cumsum(gsValues)
-
-# nb tree for 80 or 90% of species
-x_inter <- min(which(c(0, SAC) > quantile(SAC, probs = 0.8)))
-
-## plot
-sac_plot <- ggplot(data.frame(x = 0:(sum(Ns)-1), 
-                  y = c(0, SAC)), 
-       aes(x = x, y = y)) +
-  geom_line() +
-  theme_minimal()+
-  geom_vline(aes(xintercept=x_inter), color="red", 
-             linetype="dashed", lwd = 1.3) +
-  labs(x = "Number of trees", y = "Number of species")
-
-## print & save
-pdf(file = paste0("figures/sac_0.8.pdf", sep = ""), height = 6, width = 6)
-print(sac_plot)
-dev.off()

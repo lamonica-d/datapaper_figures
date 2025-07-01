@@ -24,7 +24,8 @@ french_guiana <- world %>%
 plots_all <- tibble(read.csv("data_raw/plots.csv", sep = ","))
 trees_all <- tibble(read.csv("data_raw/trees.csv", sep = ","))
 
-plots <- plots_all 
+plots <- plots_all %>%
+  filter(plot_label != "PSE5B-10B")
 
 ## remove trees without species id & trees < dbh 10cm
 trees <- trees_all %>%
@@ -43,12 +44,9 @@ community <- matrix(0, ncol = length(species_vect), nrow = length(plot_vect))
 for (i in 1:length(plot_vect)){
   temp <- community1 %>%
     filter(plot == plot_vect[i])
-  #area <- plots[plots$plot_label == plot_vect[i],]$area
-  
   for (j in 1:length(species_vect)){
     community[i,j] <- sum(match(temp$species, species_vect[j]), na.rm = T)
   }
-  #community[i,] <- ceiling(community[i,]/area)
 }
 community[is.na(community)] <- 0
 
@@ -63,33 +61,54 @@ df_temp <- cbind(plots[,c(1,4:5,10)],
 #2) HISTOGRAM OF SIMPSON INDEX PER PLOT
 
 hist_simpson <- ggplot(df_temp, aes(x=simpson_index)) + 
-  geom_histogram(color="black", fill="grey", binwidth = 0.01)+
+  geom_histogram(color="black", fill="yellow", binwidth = 0.01, alpha = 0.2)+
   geom_vline(aes(xintercept=mean(simpson_index)), color="red", 
              linetype="dashed", lwd = 1.3) +
-  theme_minimal()+
+  theme_get()+
   ylab("Count")+
-  xlab("")+
-  ggtitle("Simpson index")
+  xlab("")
 
 #3) MAP OF PLOTS WITH SIMPSON INDEXES
+#replace missing latitude for one of PCQ sublot IT01
+df_temp$lat_dd[df_temp$plot_label == "ITO1"] <- 3.02
 
-maps_simpson <- ggplot() +
+map_simpson_size <- ggplot() +
   coord_fixed(1) +
-  scale_fill_viridis_c() +
-  geom_point(data = df_temp, aes(x=long_dd, y=lat_dd, size = simpson_index), 
-             colour = "darkgrey", shape=1) +
-  theme_minimal()+
-  labs(size = "Simpson index")+
+  geom_point(data = df_temp, aes(x=long_dd, y=lat_dd, size = simpson_index,
+                                 color = simpson_index), 
+             , shape=2) +
+  scale_color_gradient()+
+  theme_get()+
+  labs(color = "Simpson index", size = "")+
   geom_polygon(data = french_guiana, aes(x=long, y = lat), fill=NA, colour="black")+
   theme(legend.position = "right")+
   xlab("Longitude")+
   ylab("Latitude")
 
+
 ## print & save
-pdf(file = paste0("figures/hist_maps_simpson.pdf", sep = ""), height = 6, width = 12)
-print(plot_grid(hist_simpson, maps_simpson, align = "h", nrow = 1,
+pdf(file = paste0("figures/hist_map_simpson_size.pdf", sep = ""), height = 6, width = 12)
+print(plot_grid(hist_simpson, map_simpson_size, align = "h", nrow = 1,
                   rel_widths = c(1/2, 1/2)))
 dev.off()
 
+# ## second option
+# map_simpson_col <- ggplot() +
+#   coord_fixed(1) +
+#   geom_point(data = df_temp, aes(x=long_dd, y=lat_dd, colour = simpson_index), 
+#              size = 3, shape = 8) +
+#   scale_colour_viridis_b()+
+#   theme_minimal()+
+#   labs(colour = "Simpson index")+
+#   geom_polygon(data = french_guiana, aes(x=long, y = lat), fill=NA, colour="black")+
+#   theme(legend.position = "right")+
+#   xlab("Longitude")+
+#   ylab("Latitude")
+# 
+# ## print & save
+# pdf(file = paste0("figures/hist_map_simpson_color.pdf", sep = ""), height = 6, width = 12)
+# print(plot_grid(hist_simpson, map_simpson_col, align = "h", nrow = 1,
+#                 rel_widths = c(1/2, 1/2)))
+# dev.off()
 
 

@@ -53,13 +53,14 @@ for (i in 1:nrow(plots)){
 df_temp <- cbind(plots[,c(1,4:5,10)], nb_tree_per_ha = nb_trees/plots$area)
 
 hist_nbtha <- ggplot(df_temp, aes(x=nb_tree_per_ha)) + 
-  geom_histogram(color="black", fill="yellow", binwidth = 50, alpha = 0.2)+
+  geom_histogram(color="black", fill="darkgrey", binwidth = 50, alpha = 0.6)+
   geom_vline(aes(xintercept=mean(nb_tree_per_ha)), color="red", 
              linetype="dashed", lwd = 1.3) +
   ylab("Count")+
   xlab("")
 
 ## print & save
-pdf(file = paste0("figures/hist_nb_tree_per_ha.pdf", sep = ""), height = 6, width = 6)
+tiff(file = paste0("figures/hist_nb_tree_per_ha.tiff", sep = ""), height = 6, 
+    width = 6, units = "in", res = 300)
 print(hist_nbtha)
 dev.off()

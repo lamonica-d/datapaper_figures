@@ -54,7 +54,8 @@ data <- tibble(plot_label = plot_vect,
                nb_sp_per_ha = round(specnumber(community)/plots$area,digits =0)
 )
 
-pdf(file = "figures/small_plots.pdf", height = 8, width = 8)
+tiff(file = paste0("figures/small_plots.tiff", sep = ""), height = 6, 
+     width = 10, units = "in", res = 300)
 ggplot(data)+
   geom_point(aes(x = area, y = nb_sp_per_ha))+
   xlab("Plot area (ha)")+

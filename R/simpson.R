@@ -61,7 +61,7 @@ df_temp <- cbind(plots[,c(1,4:5,10)],
 #2) HISTOGRAM OF SIMPSON INDEX PER PLOT
 
 hist_simpson <- ggplot(df_temp, aes(x=simpson_index)) + 
-  geom_histogram(color="black", fill="yellow", binwidth = 0.01, alpha = 0.2)+
+  geom_histogram(color="black", fill="darkgrey", binwidth = 0.01, alpha = 0.6)+
   geom_vline(aes(xintercept=mean(simpson_index)), color="red", 
              linetype="dashed", lwd = 1.3) +
   theme_get()+
@@ -85,9 +85,9 @@ map_simpson_size <- ggplot() +
   xlab("Longitude")+
   ylab("Latitude")
 
-
 ## print & save
-pdf(file = paste0("figures/hist_map_simpson_size.pdf", sep = ""), height = 6, width = 12)
+tiff(file = paste0("figures/hist_map_simpson.tiff", sep = ""), height = 6, 
+     width = 12, units = "in", res = 300)
 print(plot_grid(hist_simpson, map_simpson_size, align = "h", nrow = 1,
                   rel_widths = c(1/2, 1/2)))
 dev.off()

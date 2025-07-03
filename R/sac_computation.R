@@ -24,9 +24,8 @@ trees_all <- tibble(read.csv("data_raw/trees.csv", sep = ","))
 
 plots <- plots_all
 
-## remove trees without species id & trees < dbh 10cm
+## remove trees without species id
 trees <- trees_all %>%
-  filter(dbh_before_2000 >= 10 | dbh_after_2000 >= 10) %>%
   filter(!is.na(species))
 
 trees <- cbind(trees, fam_gen_sp =  str_c(trees$family, trees$genus, trees$species, sep = "_"))
@@ -57,7 +56,11 @@ Ns <- colSums(community)
 
 #### !!!! DO NOT RUN, SUPER LONG !!! ########################################
 # gsValues <- sapply(1:(sum(Ns)-1), function(r) GenSimp.z(Ns, r))
+# saveRDS(gsValues, file ="outputs/mean_gsValues.RDS")
+# 
 # gsValues_sd <- sapply(1:(sum(Ns)-1), function(r) GenSimp.sd(Ns, r))
+# saveRDS(gsValues_sd, file ="outputs/sd_gsValues.RDS")
+# 
 # ic <- qnorm(1 - 0.05/2) * gsValues_sd/sqrt(sum(Ns))
 # 
 # df_gsValues <- data.frame(mean = gsValues, sd = gsValues_sd,
@@ -77,19 +80,20 @@ SAC_upper <- cumsum(df_gsValues$upper)
 df_plotsac <- data.frame(x = 0:(sum(Ns)-1), ymean = c(0, SAC), 
                          ylower = c(0, SAC_lower),yupper = c(0, SAC_upper))
 
-# nb tree for 80 or 90% of species
-x_inter <- min(which(c(0, SAC) > quantile(SAC, probs = 0.8)))
+# # nb tree for 80 or 90% of species
+(x_inter <- min(which(c(0, SAC) > quantile(SAC, probs = 0.8))))
 
 ## plot
 sac_plot <- ggplot(data = df_plotsac) +
   geom_ribbon(aes(x=x, ymin = ylower, ymax = yupper), fill = "lightblue", alpha = 0.8) +
   geom_line(aes(x = x, y = ymean)) +
-  geom_vline(aes(xintercept=x_inter), colour="red", 
-             linetype="dashed", lwd = 1.3) +
+  # geom_vline(aes(xintercept=x_inter), colour="red", 
+  #            linetype="dashed", lwd = 1.3) +
   labs(x = "Number of trees", y = "Number of species")+
   theme_get()
 
 ## print & save
-pdf(file = paste0("figures/sac_0.8.pdf", sep = ""), height = 6, width = 6)
+tiff(file = paste0("figures/sac.tiff", sep = ""), height = 6, width = 6, 
+     units = "in", res = 300)
 print(sac_plot)
 dev.off()

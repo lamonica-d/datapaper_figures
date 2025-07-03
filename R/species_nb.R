@@ -73,14 +73,15 @@ df_temp <- cbind(plots[,c(1,4:5,10)],
 )
 
 hist_nbspha <- ggplot(df_temp, aes(x=nb_sp_per_ha)) + 
-  geom_histogram(color="black", fill="yellow", binwidth = 10, alpha = 0.2)+
+  geom_histogram(color="black", fill="darkgrey", binwidth = 10, alpha = 0.6)+
   geom_vline(aes(xintercept=mean(nb_sp_per_ha)), color="red", 
              linetype="dashed", lwd = 1.3) +
   ylab("Count")+
   xlab("")
 
 ## print & save
-pdf(file = paste0("figures/hist_nb_sp_per_ha.pdf", sep = ""), height = 6, width = 6)
+tiff(file = paste0("figures/hist_nb_sp_per_ha.tiff", sep = ""), height = 6, 
+     width = 6, units = "in", res = 300)
 print(hist_nbspha)
 dev.off()
 
